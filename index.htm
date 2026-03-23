@@ -86,24 +86,29 @@
             text-align: right;
         }
 
-        /* تنسيق خاص لرمز السن مع الرقم داخله */
+        /* تنسيق الرمز مع الرقم بالداخل - باستخدام Flexbox */
         .tooth-symbol {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
-            display: inline-block;
-            font-size: 28px;  /* حجم الرمز الكبير */
-            line-height: 1;
+            font-size: 32px;
             font-weight: normal;
-            color: #1a1a1a;
+            line-height: 1;
+        }
+        
+        .tooth-symbol .symbol {
+            display: inline-block;
         }
         
         .tooth-symbol .digit {
             position: absolute;
-            top: 50%;
+            font-size: 16px;
+            font-weight: 600;
+            /* ضبط دقيق للرقم داخل الرمز */
+            top: 52%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 16px;   /* حجم الرقم */
-            font-weight: 600;
-            color: #1a1a1a;
         }
 
         .footer {
@@ -132,7 +137,6 @@
 
         <div class="divider"></div>
 
-        <!-- الصفوف -->
         <div class="row">
             <div class="left">Company</div>
             <div class="center">Straumann</div>
@@ -184,9 +188,9 @@
         <div class="row">
             <div class="left">implant site</div>
             <div class="center">
-                <!-- رمز الفك العلوي الأيمن مع الرقم 6 داخله -->
+                <!-- الرقم 6 داخل الرمز ┘ (الفك العلوي الأيمن) -->
                 <span class="tooth-symbol">
-                    ┘
+                    <span class="symbol">┘</span>
                     <span class="digit">6</span>
                 </span>
             </div>

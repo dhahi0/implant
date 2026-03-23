@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معلومات زراعة الأسنان</title>
+    <title>معلومات زراعة الأسنان - تحريك الرمز</title>
     <style>
         * {
             margin: 0;
@@ -76,6 +76,7 @@
             font-size: 13px;
             color: rgba(0,0,0,0.88);
             text-align: center;
+            position: relative;
         }
 
         .right {
@@ -86,29 +87,75 @@
             text-align: right;
         }
 
-        /* تنسيق الرمز مع الرقم بالداخل - باستخدام Flexbox */
-        .tooth-symbol {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+        /* حاوية الرمز مع إمكانية التحريك */
+        .tooth-container {
             position: relative;
-            font-size: 32px;
-            font-weight: normal;
-            line-height: 1;
+            display: inline-block;
+            width: 60px;
+            height: 60px;
         }
         
-        .tooth-symbol .symbol {
+        .tooth-symbol {
+            position: relative;
             display: inline-block;
+            font-size: 48px;
+            line-height: 1;
+            font-weight: normal;
+            color: #1a1a1a;
+            cursor: move;
+            transition: transform 0.1s ease;
         }
         
         .tooth-symbol .digit {
             position: absolute;
-            font-size: 16px;
-            font-weight: 600;
-            /* ضبط دقيق للرقم داخل الرمز */
-            top: 20%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        /* أزرار التحكم */
+        .control-buttons {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        
+        .reset-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .position-indicator {
+            font-size: 11px;
+            color: #666;
+            margin-top: 8px;
+            text-align: center;
         }
 
         .footer {
@@ -127,6 +174,20 @@
             font-size: 12px;
             color: rgba(0,0,0,0.45);
         }
+        
+        /* حاوية الرمز القابلة للتحريك */
+        .movable-area {
+            position: relative;
+            display: inline-block;
+            min-width: 100px;
+            min-height: 80px;
+        }
+        
+        #movableSymbol {
+            position: relative;
+            display: inline-block;
+            transition: all 0.15s ease;
+        }
     </style>
 </head>
 <body>
@@ -137,6 +198,7 @@
 
         <div class="divider"></div>
 
+        <!-- الصفوف -->
         <div class="row">
             <div class="left">Company</div>
             <div class="center">Straumann</div>
@@ -188,13 +250,29 @@
         <div class="row">
             <div class="left">implant site</div>
             <div class="center">
-                <!-- الرقم 6 داخل الرمز ┘ (الفك العلوي الأيمن) -->
-                <span class="tooth-symbol">
-                    <span class="symbol">┘</span>
-                    <span class="digit">6</span>
-                </span>
+                <div class="movable-area">
+                    <div id="movableSymbol" style="position: relative; display: inline-block;">
+                        <span class="tooth-symbol">
+                            ┘
+                            <span class="digit">6</span>
+                        </span>
+                    </div>
+                </div>
             </div>
             <div class="right">مكان الزرعة</div>
+        </div>
+        
+        <!-- أزرار التحكم -->
+        <div class="control-buttons">
+            <button class="control-btn" onclick="moveSymbol('up')">▲ أعلى</button>
+            <button class="control-btn" onclick="moveSymbol('down')">▼ أسفل</button>
+            <button class="control-btn" onclick="moveSymbol('left')">◀ يسار</button>
+            <button class="control-btn" onclick="moveSymbol('right')">▶ يمين</button>
+            <button class="control-btn reset-btn" onclick="resetPosition()">⟳ إعادة ضبط</button>
+        </div>
+        
+        <div class="position-indicator" id="positionIndicator">
+            الموقع الحالي: (0, 0)
         </div>
         
         <div class="row">
@@ -208,5 +286,85 @@
             <div class="footer-right"></div>
         </div>
     </div>
+
+    <script>
+        // متغيرات لتتبع موقع الرمز
+        let currentX = 0;
+        let currentY = 0;
+        const step = 8; // مقدار الحركة لكل ضغطة (بالبكسل)
+        
+        const movableSymbol = document.getElementById('movableSymbol');
+        const positionIndicator = document.getElementById('positionIndicator');
+        
+        // تحديث عرض الموقع
+        function updatePositionDisplay() {
+            positionIndicator.textContent = `الموقع الحالي: (${currentX}, ${currentY})`;
+        }
+        
+        // تطبيق التحريك على العنصر
+        function applyMovement() {
+            movableSymbol.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            updatePositionDisplay();
+        }
+        
+        // تحريك الرمز
+        function moveSymbol(direction) {
+            switch(direction) {
+                case 'up':
+                    currentY -= step;
+                    break;
+                case 'down':
+                    currentY += step;
+                    break;
+                case 'left':
+                    currentX -= step;
+                    break;
+                case 'right':
+                    currentX += step;
+                    break;
+                default:
+                    return;
+            }
+            applyMovement();
+        }
+        
+        // إعادة ضبط الموقع
+        function resetPosition() {
+            currentX = 0;
+            currentY = 0;
+            applyMovement();
+        }
+        
+        // دعم التحريك باستخدام مفاتيح لوحة المفاتيح (اختياري)
+        document.addEventListener('keydown', function(event) {
+            switch(event.key) {
+                case 'ArrowUp':
+                    event.preventDefault();
+                    moveSymbol('up');
+                    break;
+                case 'ArrowDown':
+                    event.preventDefault();
+                    moveSymbol('down');
+                    break;
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    moveSymbol('left');
+                    break;
+                case 'ArrowRight':
+                    event.preventDefault();
+                    moveSymbol('right');
+                    break;
+                case 'Home':
+                    event.preventDefault();
+                    resetPosition();
+                    break;
+                default:
+                    break;
+            }
+        });
+        
+        // تهيئة العرض
+        updatePositionDisplay();
+    </script>
 </body>
 </html>

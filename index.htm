@@ -110,7 +110,7 @@
             color: #1a1a1a;
             z-index: 2;
             background: transparent;
-            pointer-events: none; /* يجعل الرقم غير قابل للتفاعل */
+            pointer-events: none;
         }
         
         /* الرمز المتحرك */
@@ -126,63 +126,40 @@
             z-index: 1;
             pointer-events: auto;
         }
-        
-        /* معلومات البرمجة */
-        .info-box {
-            background: rgba(0,0,0,0.05);
-            border-radius: 12px;
-            padding: 10px;
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .info-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-        }
-        
-        .coordinates {
-            font-size: 11px;
-            color: #666;
-            font-family: monospace;
-            margin: 5px 0;
-        }
-        
-        .code-input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 12px;
-            margin-top: 8px;
-            text-align: center;
-        }
-        
-        .apply-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: all 0.2s ease;
-        }
-        
-        .apply-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
 
         .footer {
             display: flex;
             justify-content: space-between;
             margin-top: 6px;
+        }
+
+        .footer-left {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(0,0,0,0.55);
+        }
+
+        .footer-right {
+            font-size: 12px;
+            color: rgba(0,0,0,0.45);
+        }
+        
+        /* رسالة تعليمات خفيفة */
+        .instruction {
+            text-align: center;
+            font-size: 10px;
+            color: rgba(0,0,0,0.4);
+            margin-top: 8px;
+            padding: 4px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .instruction code {
+            background: rgba(0,0,0,0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 9px;
         }
     </style>
 </head>
@@ -256,16 +233,6 @@
             <div class="right">مكان الزرعة</div>
         </div>
         
-        <!-- قسم التحكم البرمجي -->
-        <div class="info-box">
-            <div class="info-title">🎮 التحكم البرمجي بحركة الرمز</div>
-            <div class="coordinates" id="coordDisplay">الإحداثيات الحالية: (0, 0)</div>
-            <input type="text" id="xInput" class="code-input" placeholder="إحداثي X (مثال: 20 أو -15)" value="0">
-            <input type="text" id="yInput" class="code-input" placeholder="إحداثي Y (مثال: 10 أو -20)" value="0" style="margin-top: 5px;">
-            <button class="apply-btn" onclick="moveSymbolProgrammatically()">تطبيق الإحداثيات</button>
-            <button class="apply-btn" onclick="resetPosition()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); margin-right: 5px;">↺ إعادة ضبط</button>
-        </div>
-        
         <div class="row">
             <div class="left">Implant Date</div>
             <div class="center">2026/01/29</div>
@@ -276,6 +243,10 @@
             <div class="footer-left"></div>
             <div class="footer-right"></div>
         </div>
+        
+        <div class="instruction">
+            💻 التحكم البرمجي: افتح Console (F12) واستخدم الأوامر التالية
+        </div>
     </div>
 
     <script>
@@ -284,23 +255,10 @@
         let currentY = 0;
         
         const movableSymbol = document.getElementById('movableSymbol');
-        const coordDisplay = document.getElementById('coordDisplay');
-        const xInput = document.getElementById('xInput');
-        const yInput = document.getElementById('yInput');
-        
-        // تحديث عرض الإحداثيات
-        function updateDisplay() {
-            coordDisplay.textContent = `الإحداثيات الحالية: (${currentX}, ${currentY})`;
-            if (xInput && yInput) {
-                xInput.value = currentX;
-                yInput.value = currentY;
-            }
-        }
         
         // تطبيق الحركة على الرمز فقط (الرقم ثابت لا يتأثر)
         function applyMovement() {
             movableSymbol.style.transform = `translate(${currentX}px, ${currentY}px)`;
-            updateDisplay();
         }
         
         // دالة برمجية لتحريك الرمز إلى إحداثيات محددة
@@ -308,6 +266,7 @@
             currentX = x;
             currentY = y;
             applyMovement();
+            console.log(`تم تحريك الرمز إلى: (${currentX}, ${currentY})`);
         }
         
         // دالة برمجية لتحريك الرمز بمقدار إزاحة معين
@@ -315,17 +274,7 @@
             currentX += deltaX;
             currentY += deltaY;
             applyMovement();
-        }
-        
-        // الحصول على القيم من حقول الإدخال وتطبيقها
-        function moveSymbolProgrammatically() {
-            let newX = parseFloat(xInput.value);
-            let newY = parseFloat(yInput.value);
-            
-            if (isNaN(newX)) newX = currentX;
-            if (isNaN(newY)) newY = currentY;
-            
-            moveSymbolTo(newX, newY);
+            console.log(`تم تحريك الرمز إلى: (${currentX}, ${currentY})`);
         }
         
         // إعادة ضبط الموقع إلى الصفر
@@ -333,61 +282,30 @@
             moveSymbolTo(0, 0);
         }
         
-        // ========== أمثلة برمجية لتحريك الرمز ==========
-        // يمكن استدعاء هذه الدوال برمجياً من أي مكان
+        // الحصول على الموقع الحالي
+        function getCurrentPosition() {
+            return { x: currentX, y: currentY };
+        }
         
-        // مثال: تحريك الرمز إلى الأعلى (تغيير Y)
+        // ========== دوال مساعدة للتحريك في الاتجاهات ==========
         function moveUp(offset = 10) {
             moveSymbolBy(0, -offset);
         }
         
-        // مثال: تحريك الرمز إلى الأسفل
         function moveDown(offset = 10) {
             moveSymbolBy(0, offset);
         }
         
-        // مثال: تحريك الرمز إلى اليسار
         function moveLeft(offset = 10) {
             moveSymbolBy(-offset, 0);
         }
         
-        // مثال: تحريك الرمز إلى اليمين
         function moveRight(offset = 10) {
             moveSymbolBy(offset, 0);
         }
         
-        // مثال: تحريك الرمز إلى موقع محدد (الزاوية العلوية اليسرى بالنسبة للمركز)
-        function moveToTopLeft() {
-            moveSymbolTo(-25, -25);
-        }
-        
-        // مثال: تحريك الرمز إلى الزاوية العلوية اليمنى
-        function moveToTopRight() {
-            moveSymbolTo(25, -25);
-        }
-        
-        // مثال: تحريك الرمز إلى الزاوية السفلية اليسرى
-        function moveToBottomLeft() {
-            moveSymbolTo(-25, 25);
-        }
-        
-        // مثال: تحريك الرمز إلى الزاوية السفلية اليمنى
-        function moveToBottomRight() {
-            moveSymbolTo(25, 25);
-        }
-        
-        // ========== يمكنك استدعاء هذه الدوال برمجياً ==========
-        // مثال: تحريك الرمز إلى الأسفل بمقدار 15 بكسل بعد 2 ثانية (اختياري للعرض)
-        setTimeout(() => {
-            // هذا مجرد مثال توضيحي - يمكنك إلغاء التعليق لرؤية الحركة التلقائية
-            // moveDown(15);
-        }, 2000);
-        
-        // تهيئة العرض
-        updateDisplay();
-        
-        // إضافة دالة عامة للتحكم من console
-        window.moveImplantSymbol = {
+        // ========== تعريض الدوال للاستخدام من Console ==========
+        window.ImplantSymbol = {
             to: moveSymbolTo,
             by: moveSymbolBy,
             up: moveUp,
@@ -395,17 +313,27 @@
             left: moveLeft,
             right: moveRight,
             reset: resetPosition,
-            topLeft: moveToTopLeft,
-            topRight: moveToTopRight,
-            bottomLeft: moveToBottomLeft,
-            bottomRight: moveToBottomRight
+            getPosition: getCurrentPosition
         };
         
-        console.log('تم التحميل - يمكنك التحكم بالرمز برمجياً عبر:');
-        console.log('window.moveImplantSymbol.to(x, y) - للتحريك إلى إحداثيات محددة');
-        console.log('window.moveImplantSymbol.by(dx, dy) - للتحريك بمقدار إزاحة');
-        console.log('window.moveImplantSymbol.up(), down(), left(), right() - للتحريك في الاتجاهات');
-        console.log('window.moveImplantSymbol.reset() - لإعادة الضبط');
+        // تهيئة
+        applyMovement();
+        
+        // عرض التعليمات في Console
+        console.log('%c🎯 تحكم بحركة الرمز "┘" (الرقم 6 ثابت)', 'color: #764ba2; font-size: 14px; font-weight: bold;');
+        console.log('%cالأوامر المتاحة:', 'color: #667eea; font-size: 12px;');
+        console.log('  ImplantSymbol.to(x, y)     → تحريك إلى إحداثيات محددة');
+        console.log('  ImplantSymbol.by(dx, dy)   → تحريك بمقدار إزاحة');
+        console.log('  ImplantSymbol.up(px)       → تحريك للأعلى');
+        console.log('  ImplantSymbol.down(px)     → تحريك للأسفل');
+        console.log('  ImplantSymbol.left(px)     → تحريك لليسار');
+        console.log('  ImplantSymbol.right(px)    → تحريك لليمين');
+        console.log('  ImplantSymbol.reset()      → إعادة الضبط إلى (0,0)');
+        console.log('  ImplantSymbol.getPosition()→ الحصول على الموقع الحالي');
+        console.log('%cأمثلة:', 'color: #f093fb;');
+        console.log('  ImplantSymbol.to(25, -20)');
+        console.log('  ImplantSymbol.right(15)');
+        console.log('  ImplantSymbol.down(10)');
     </script>
 </body>
 </html>

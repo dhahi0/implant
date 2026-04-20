@@ -40,8 +40,8 @@
             z-index: 1000;
             cursor: pointer;
             transition: transform 0.1s ease;
-            user-select: none; /* منع تحديد النص أثناء الضغطة الطويلة */
-            -webkit-tap-highlight-color: transparent; /* إزالة الخلفية الزرقاء عند الضغط */
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .card:active {
@@ -117,24 +117,6 @@
             color: rgba(0,0,0,0.45);
         }
 
-        /* رسالة تأكيد الحفظ */
-        .toast-message {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 14px;
-            z-index: 2000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-
         @media (max-width: 550px) {
             .card {
                 width: calc(100% - 40px);
@@ -149,13 +131,8 @@
             .center {
                 font-size: 12px;
             }
-            .toast-message {
-                font-size: 12px;
-                white-space: nowrap;
-            }
         }
     </style>
-    <!-- إضافة مكتبة html2canvas لتحويل البطاقة إلى صورة -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
@@ -232,63 +209,72 @@
         </div>
     </div>
 
-    <div class="toast-message" id="toastMessage">✅ تم حفظ البطاقة كصورة</div>
-
     <script>
         (function() {
             const card = document.getElementById('implantCard');
-            const toast = document.getElementById('toastMessage');
             let pressTimer = null;
             let isProcessing = false;
 
-            // دالة عرض رسالة短暂ة
-            function showToast(message) {
-                toast.textContent = message || '✅ تم حفظ البطاقة كصورة';
-                toast.style.opacity = '1';
-                setTimeout(function() {
-                    toast.style.opacity = '0';
-                }, 2000);
-            }
-
-            // دالة حفظ البطاقة كصورة
             function captureAndSave() {
                 if (isProcessing) return;
                 isProcessing = true;
 
-                // إضافة تأثير بسيط أثناء التصوير (دون تغيير الشكل النهائي)
+                // تأثير بسيط أثناء التصوير
                 card.style.opacity = '0.95';
                 
-                // استخدام html2canvas لتصوير البطاقة
+                // الحصول على أبعاد البطاقة الفعلية
+                const rect = card.getBoundingClientRect();
+                const targetWidth = rect.width;
+                const targetHeight = rect.height;
+                
+                // حساب عامل القياس للوصول إلى دقة 4K أو أعلى جودة ممكنة
+                // 4K العرض = 3840 بكسل على الأقل
+                const min4KWidth = 3840;
+                let scale = Math.max(4, min4KWidth / targetWidth);
+                
+                // الحد الأقصى للقياس لتجنب الأحجام الضخمة جداً (أقصى حد 8 أضعاف)
+                scale = Math.min(scale, 8);
+                
                 html2canvas(card, {
-                    scale: 2,                    // جودة عالية
-                    backgroundColor: null,        // خلفية شفافة (تحافظ على التدرج)
+                    scale: scale,                    // قياس عالي جداً لدقة 4K
+                    backgroundColor: null,            // خلفية شفافة (تحافظ على التدرج)
                     useCORS: false,
                     logging: false,
-                    allowTaint: false
+                    allowTaint: false,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    onclone: function(clonedDoc, element) {
+                        // التأكد من أن جميع الأنماط تبقى كما هي
+                        const clonedCard = clonedDoc.getElementById('implantCard');
+                        if (clonedCard) {
+                            clonedCard.style.opacity = '1';
+                        }
+                    }
                 }).then(function(canvas) {
-                    // إعادة الشفافية
                     card.style.opacity = '1';
                     
-                    // تحويل canvas إلى رابط تحميل
+                    // إنشاء رابط التحميل
                     const link = document.createElement('a');
                     const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
-                    link.download = 'زراعة_الاسنان_' + timestamp + '.png';
+                    link.download = 'زراعة_الاسنان_4K_' + timestamp + '.png';
+                    
+                    // استخدام أفضل جودة PNG (بدون ضغط)
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                     
-                    showToast('✅ تم حفظ البطاقة كصورة');
+                    // تنظيف الذاكرة
+                    canvas.remove();
                     isProcessing = false;
+                    
                 }).catch(function(error) {
                     console.error('خطأ في التصوير:', error);
                     card.style.opacity = '1';
-                    showToast('❌ حدث خطأ، حاول مرة أخرى');
                     isProcessing = false;
                 });
             }
 
-            // بدء المؤقت عند الضغط (للهواتف واللمس)
+            // أحداث اللمس للهواتف
             card.addEventListener('touchstart', function(e) {
-                // منع القائمة الافتراضية للضغطة الطويلة في المتصفحات
                 e.preventDefault();
                 pressTimer = setTimeout(function() {
                     captureAndSave();
@@ -303,18 +289,16 @@
             });
 
             card.addEventListener('touchmove', function(e) {
-                // إلغاء إذا تحرك الإصبع أثناء الضغط
                 if (pressTimer) {
                     clearTimeout(pressTimer);
                     pressTimer = null;
                 }
             });
 
-            // دعم الفأرة (للحواسيب) - الضغطة المطولة بزر الفأرة الأيسر
+            // أحداث الفأرة للحواسيب
             let mouseDownTimer = null;
             
             card.addEventListener('mousedown', function(e) {
-                // زر الفأرة الأيسر فقط (button === 0)
                 if (e.button !== 0) return;
                 mouseDownTimer = setTimeout(function() {
                     captureAndSave();
@@ -335,7 +319,7 @@
                 }
             });
 
-            // منع القائمة السياقية الافتراضية (الضغطة الطويلة)
+            // منع القائمة السياقية الافتراضية
             card.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 return false;

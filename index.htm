@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معلومات زراعة الاسنان</title>
+    <title>معلومات زراعة الأسنان - صورة 4K تلقائية</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         * {
@@ -23,37 +23,8 @@
             position: relative;
         }
 
-        /* الزر خارج البطاقة - أعلى اليمين */
-        .hidden-save-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background-color: #007aff;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            transition: 0.2s;
-            z-index: 2000;
-        }
-
-        .hidden-save-btn:hover {
-            background-color: #005fc1;
-            transform: scale(1.05);
-        }
-
-        .hidden-save-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* البطاقة ثابتة في منتصف الشاشة */
-        .card {
+        /* حاوية البطاقة الأصلية (سيتم إخفاؤها بعد التحويل) */
+        .card-source {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -69,6 +40,45 @@
             padding: 18px;
             border: 1px solid rgba(0,0,0,0.06);
             z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        /* مكان عرض الصورة الناتجة */
+        .image-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 500px;
+            width: 100%;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-image {
+            width: 100%;
+            border-radius: 28px;
+            box-shadow: 0 10px 18px rgba(0,0,0,0.1);
+            display: block;
+        }
+
+        /* رسالة التحميل */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 16px;
+            z-index: 3000;
+            font-weight: 500;
         }
 
         .header {
@@ -141,7 +151,7 @@
         }
 
         @media (max-width: 550px) {
-            .card {
+            .card-source, .image-container {
                 width: calc(100% - 40px);
                 max-width: 500px;
             }
@@ -154,22 +164,15 @@
             .center {
                 font-size: 12px;
             }
-            .hidden-save-btn {
-                top: 10px;
-                right: 10px;
-                width: 42px;
-                height: 42px;
-                font-size: 20px;
-            }
         }
     </style>
 </head>
 <body>
-    <!-- زر حفظ الصورة - خارج البطاقة -->
-    <button class="hidden-save-btn" id="saveImageBtn" title="حفظ الصورة كما تظهر">📸</button>
+    <!-- رسالة تحميل تظهر أثناء التحويل -->
+    <div id="loadingMsg" class="loading">⏳ جاري تحويل البطاقة إلى صورة 4K...</div>
 
-    <!-- البطاقة -->
-    <div class="card" id="implantCard">
+    <!-- البطاقة الأصلية (سيتم تحويلها إلى صورة ثم إخفاؤها) -->
+    <div id="sourceCard" class="card-source">
         <div class="header">
             <div class="header-title">معلومات زراعة الأسنان</div>
         </div>
@@ -242,61 +245,60 @@
         </div>
     </div>
 
+    <!-- حاوية الصورة الناتجة -->
+    <div id="imageContainer" class="image-container" style="display: none;">
+        <img id="resultImage" class="result-image" alt="بطاقة زراعة الأسنان">
+    </div>
+
     <script>
         (function() {
-            const card = document.getElementById('implantCard');
-            const saveBtn = document.getElementById('saveImageBtn');
+            const sourceCard = document.getElementById('sourceCard');
+            const imageContainer = document.getElementById('imageContainer');
+            const resultImage = document.getElementById('resultImage');
+            const loadingMsg = document.getElementById('loadingMsg');
 
-            async function downloadCardAsImage() {
-                if (!card) return;
-                
-                // تغيير شكل الزر مؤقتاً
-                saveBtn.innerHTML = '⏳';
-                saveBtn.disabled = true;
-                saveBtn.style.opacity = '0.6';
+            async function convertToImage() {
+                if (!sourceCard) return;
                 
                 try {
-                    // الحصول على أبعاد البطاقة كما تظهر على الشاشة
-                    const rect = card.getBoundingClientRect();
+                    // إظهار البطاقة مؤقتاً لالتقاط الصورة (مع إبقائها غير مرئية للمستخدم)
+                    sourceCard.style.opacity = '1';
+                    sourceCard.style.visibility = 'visible';
+                    sourceCard.style.pointerEvents = 'none';
                     
-                    // التقاط صورة البطاقة كما تظهر بالشاشة تماماً
-                    const canvas = await html2canvas(card, {
-                        scale: 4,                    // دقة 4K
+                    // التقاط الصورة بدقة 4K
+                    const canvas = await html2canvas(sourceCard, {
+                        scale: 4,
                         backgroundColor: '#f2f2f2',
                         logging: false,
                         useCORS: false,
-                        width: rect.width,           // نفس العرض الظاهر
-                        height: rect.height,         // نفس الارتفاع الظاهر
-                        windowWidth: rect.width,
-                        windowHeight: rect.height
+                        windowWidth: sourceCard.scrollWidth,
+                        windowHeight: sourceCard.scrollHeight
                     });
                     
-                    // تحميل الصورة
-                    const link = document.createElement('a');
-                    link.download = 'بطاقة_زراعة_الأسنان.png';
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
+                    // إخفاء البطاقة الأصلية مرة أخرى
+                    sourceCard.style.opacity = '0';
+                    sourceCard.style.visibility = 'hidden';
                     
-                    saveBtn.innerHTML = '✅';
-                    setTimeout(() => {
-                        if (saveBtn) saveBtn.innerHTML = '📸';
-                    }, 1500);
+                    // تحويل canvas إلى صورة وعرضها
+                    const imageData = canvas.toDataURL('image/png');
+                    resultImage.src = imageData;
+                    
+                    // إظهار حاوية الصورة وإخفاء رسالة التحميل
+                    imageContainer.style.display = 'flex';
+                    loadingMsg.style.display = 'none';
                     
                 } catch (error) {
-                    console.error('خطأ:', error);
-                    saveBtn.innerHTML = '❌';
-                    setTimeout(() => {
-                        if (saveBtn) saveBtn.innerHTML = '📸';
-                    }, 1500);
-                } finally {
-                    saveBtn.disabled = false;
-                    saveBtn.style.opacity = '1';
+                    console.error('خطأ في التحويل:', error);
+                    loadingMsg.innerHTML = '❌ فشل التحويل، يرجى تحديث الصفحة';
+                    loadingMsg.style.backgroundColor = 'rgba(255,0,0,0.8)';
                 }
             }
             
-            if (saveBtn) {
-                saveBtn.addEventListener('click', downloadCardAsImage);
-            }
+            // تنفيذ التحويل التلقائي بعد تحميل الصفحة مباشرة
+            window.addEventListener('load', () => {
+                setTimeout(convertToImage, 100);
+            });
         })();
     </script>
 </body>

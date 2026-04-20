@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معلومات زراعة الأسنان</title>
+    <title>معلومات زراعة الأسنان - حفظ بالجودة الأصلية</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         * {
@@ -166,7 +166,7 @@
 </head>
 <body>
     <!-- زر حفظ الصورة - خارج البطاقة تماماً، أعلى اليمين -->
-    <button class="hidden-save-btn" id="saveImageBtn" title="حفظ الصورة بدقة 4K">📸</button>
+    <button class="hidden-save-btn" id="saveImageBtn" title="حفظ الصورة">📸</button>
 
     <!-- البطاقة كما هي دون أي تعديل -->
     <div class="card" id="implantCard">
@@ -257,14 +257,12 @@
                 saveBtn.style.opacity = '0.6';
                 
                 try {
-                    // التقاط صورة البطاقة بدقة 4K (scale 4 = دقة فائقة)
+                    // التقاط صورة البطاقة بنفس الجودة المعروضة في الموقع (scale = 1)
                     const canvas = await html2canvas(card, {
-                        scale: 4,           // 4K quality
+                        scale: 1,           // جودة مطابقة للشاشة تماماً
                         backgroundColor: '#f2f2f2',
                         logging: false,
-                        useCORS: false,
-                        windowWidth: card.scrollWidth,
-                        windowHeight: card.scrollHeight
+                        useCORS: false
                     });
                     
                     // تحويل إلى رابط صورة
@@ -272,7 +270,7 @@
                     
                     // تحميل الصورة
                     const link = document.createElement('a');
-                    link.download = 'بطاقة زراعة الاسنان.png';
+                    link.download = 'بطاقة_زراعة_الأسنان.png';
                     link.href = imageData;
                     link.click();
                     

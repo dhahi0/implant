@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>معلومات زراعة الأسنان</title>
-    <!-- مكتبة html2canvas لتحويل العنصر إلى صورة -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         * {
@@ -21,6 +20,36 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+        }
+
+        /* الزر المخفي خارج البطاقة - أعلى اليمين */
+        .hidden-save-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: #007aff;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: 0.2s;
+            z-index: 2000;
+        }
+
+        .hidden-save-btn:hover {
+            background-color: #005fc1;
+            transform: scale(1.05);
+        }
+
+        .hidden-save-btn:active {
+            transform: scale(0.95);
         }
 
         /* البطاقة ثابتة في منتصف الشاشة */
@@ -94,30 +123,6 @@
             text-align: right;
         }
 
-        /* زر حفظ الصورة */
-        .save-btn {
-            width: 100%;
-            margin-top: 16px;
-            padding: 12px;
-            background-color: #007aff;
-            border: none;
-            border-radius: 40px;
-            font-size: 16px;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 2px 8px rgba(0,122,255,0.3);
-        }
-
-        .save-btn:hover {
-            background-color: #005fc1;
-        }
-
-        .save-btn:active {
-            transform: scale(0.97);
-        }
-
         .footer {
             display: flex;
             justify-content: space-between;
@@ -149,10 +154,21 @@
             .center {
                 font-size: 12px;
             }
+            .hidden-save-btn {
+                top: 10px;
+                right: 10px;
+                width: 42px;
+                height: 42px;
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- زر حفظ الصورة - خارج البطاقة تماماً، أعلى اليمين -->
+    <button class="hidden-save-btn" id="saveImageBtn" title="حفظ الصورة بدقة 4K">📸</button>
+
+    <!-- البطاقة كما هي دون أي تعديل -->
     <div class="card" id="implantCard">
         <div class="header">
             <div class="header-title">معلومات زراعة الأسنان</div>
@@ -160,7 +176,6 @@
 
         <div class="divider"></div>
 
-        <!-- الصفوف - جميع البيانات كما هي -->
         <div class="row">
             <div class="left">Company</div>
             <div class="center">Straumann</div>
@@ -221,9 +236,6 @@
             <div class="right">تاريخ الزراعة</div>
         </div>
 
-        <!-- زر حفظ الصورة -->
-        <button class="save-btn" id="saveImageBtn">📸 حفظ الصورة</button>
-
         <div class="footer">
             <div class="footer-left"></div>
             <div class="footer-right"></div>
@@ -238,46 +250,48 @@
             async function downloadCardAsImage() {
                 if (!card) return;
                 
-                // إظهار مؤقت للتحميل (تغيير نص الزر مؤقتاً)
-                const originalText = saveBtn.innerText;
-                saveBtn.innerText = '⏳ جاري التحضير...';
+                // تغيير شكل الزر مؤقتاً
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '⏳';
                 saveBtn.disabled = true;
-                saveBtn.style.opacity = '0.7';
+                saveBtn.style.opacity = '0.6';
                 
                 try {
-                    // التقاط صورة للبطاقة
+                    // التقاط صورة البطاقة بدقة 4K (scale 4 = دقة فائقة)
                     const canvas = await html2canvas(card, {
-                        scale: 2, // دقة عالية
+                        scale: 4,           // 4K quality
                         backgroundColor: '#f2f2f2',
                         logging: false,
-                        useCORS: false
+                        useCORS: false,
+                        windowWidth: card.scrollWidth,
+                        windowHeight: card.scrollHeight
                     });
                     
-                    // تحويل canvas إلى رابط صورة
+                    // تحويل إلى رابط صورة
                     const imageData = canvas.toDataURL('image/png');
                     
-                    // إنشاء رابط تحميل مؤقت
+                    // تحميل الصورة
                     const link = document.createElement('a');
-                    link.download = 'بطاقة_زراعة_الأسنان.png';
+                    link.download = 'بطاقة زراعة الاسنان.png';
                     link.href = imageData;
                     link.click();
                     
-                    // رسالة نجاح (تختفي بعد ثانيتين)
-                    saveBtn.innerText = '✅ تم الحفظ!';
+                    // إشعار نجاح سريع
+                    saveBtn.innerHTML = '✅';
                     setTimeout(() => {
                         if (saveBtn) {
-                            saveBtn.innerText = originalText;
+                            saveBtn.innerHTML = '📸';
                         }
-                    }, 2000);
+                    }, 1500);
                     
                 } catch (error) {
-                    console.error('خطأ في حفظ الصورة:', error);
-                    saveBtn.innerText = '❌ فشل الحفظ';
+                    console.error('خطأ:', error);
+                    saveBtn.innerHTML = '❌';
                     setTimeout(() => {
                         if (saveBtn) {
-                            saveBtn.innerText = originalText;
+                            saveBtn.innerHTML = '📸';
                         }
-                    }, 2000);
+                    }, 1500);
                 } finally {
                     saveBtn.disabled = false;
                     saveBtn.style.opacity = '1';

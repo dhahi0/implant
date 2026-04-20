@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معلومات زراعة الأسنان - حفظ بالجودة الأصلية</title>
+    <title>معلومات زراعة الاسنان</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         * {
@@ -23,7 +23,7 @@
             position: relative;
         }
 
-        /* الزر المخفي خارج البطاقة - أعلى اليمين */
+        /* الزر خارج البطاقة - أعلى اليمين */
         .hidden-save-btn {
             position: fixed;
             top: 20px;
@@ -165,10 +165,10 @@
     </style>
 </head>
 <body>
-    <!-- زر حفظ الصورة - خارج البطاقة تماماً، أعلى اليمين -->
-    <button class="hidden-save-btn" id="saveImageBtn" title="حفظ الصورة">📸</button>
+    <!-- زر حفظ الصورة - خارج البطاقة -->
+    <button class="hidden-save-btn" id="saveImageBtn" title="حفظ الصورة كما تظهر">📸</button>
 
-    <!-- البطاقة كما هي دون أي تعديل -->
+    <!-- البطاقة -->
     <div class="card" id="implantCard">
         <div class="header">
             <div class="header-title">معلومات زراعة الأسنان</div>
@@ -251,44 +251,42 @@
                 if (!card) return;
                 
                 // تغيير شكل الزر مؤقتاً
-                const originalText = saveBtn.innerHTML;
                 saveBtn.innerHTML = '⏳';
                 saveBtn.disabled = true;
                 saveBtn.style.opacity = '0.6';
                 
                 try {
-                    // التقاط صورة البطاقة بنفس الجودة المعروضة في الموقع (scale = 1)
+                    // الحصول على أبعاد البطاقة كما تظهر على الشاشة
+                    const rect = card.getBoundingClientRect();
+                    
+                    // التقاط صورة البطاقة كما تظهر بالشاشة تماماً
                     const canvas = await html2canvas(card, {
-                        scale: 1,           // جودة مطابقة للشاشة تماماً
+                        scale: 4,                    // دقة 4K
                         backgroundColor: '#f2f2f2',
                         logging: false,
-                        useCORS: false
+                        useCORS: false,
+                        width: rect.width,           // نفس العرض الظاهر
+                        height: rect.height,         // نفس الارتفاع الظاهر
+                        windowWidth: rect.width,
+                        windowHeight: rect.height
                     });
-                    
-                    // تحويل إلى رابط صورة
-                    const imageData = canvas.toDataURL('image/png');
                     
                     // تحميل الصورة
                     const link = document.createElement('a');
                     link.download = 'بطاقة_زراعة_الأسنان.png';
-                    link.href = imageData;
+                    link.href = canvas.toDataURL('image/png');
                     link.click();
                     
-                    // إشعار نجاح سريع
                     saveBtn.innerHTML = '✅';
                     setTimeout(() => {
-                        if (saveBtn) {
-                            saveBtn.innerHTML = '📸';
-                        }
+                        if (saveBtn) saveBtn.innerHTML = '📸';
                     }, 1500);
                     
                 } catch (error) {
                     console.error('خطأ:', error);
                     saveBtn.innerHTML = '❌';
                     setTimeout(() => {
-                        if (saveBtn) {
-                            saveBtn.innerHTML = '📸';
-                        }
+                        if (saveBtn) saveBtn.innerHTML = '📸';
                     }, 1500);
                 } finally {
                     saveBtn.disabled = false;

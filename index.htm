@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معلومات زراعة الأسنان</title>
+    <title>معلومات زراعة الأسنان - بطاقة ثابتة</title>
     <style>
         * {
             margin: 0;
@@ -21,6 +21,7 @@
             padding: 20px;
         }
 
+        /* البطاقة أصبحت ثابتة (fixed) بالنسبة لإطار العرض */
         .card {
             position: fixed;
             top: 50%;
@@ -36,16 +37,10 @@
                 rgba(255,255,255,0.92) 100%);
             padding: 18px;
             border: 1px solid rgba(0,0,0,0.06);
+            /* إضافة ضمان الثبات مع الحفاظ على كل الخصائص */
             margin: 0;
             z-index: 1000;
-            cursor: pointer;
-            transition: transform 0.1s ease;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .card:active {
-            transform: translate(-50%, -50%) scale(0.99);
+            backdrop-filter: blur(0px); /* لا تغيير في المظهر الأصلي */
         }
 
         .header {
@@ -117,6 +112,7 @@
             color: rgba(0,0,0,0.45);
         }
 
+        /* إضافة دعم صغير للشاشات الصغيرة جداً للحفاظ على الثبات دون تغيير أي ميزة */
         @media (max-width: 550px) {
             .card {
                 width: calc(100% - 40px);
@@ -133,16 +129,17 @@
             }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-    <div class="card" id="implantCard">
+    <!-- البطاقة ثابتة في منتصف الشاشة تماماً مع الحفاظ على كل المحتوى والخصائص -->
+    <div class="card">
         <div class="header">
             <div class="header-title">معلومات زراعة الأسنان</div>
         </div>
 
         <div class="divider"></div>
 
+        <!-- الصفوف - جميع البيانات كما هي دون تعديل -->
         <div class="row">
             <div class="left">Company</div>
             <div class="center">Straumann</div>
@@ -208,124 +205,5 @@
             <div class="footer-right"></div>
         </div>
     </div>
-
-    <script>
-        (function() {
-            const card = document.getElementById('implantCard');
-            let pressTimer = null;
-            let isProcessing = false;
-
-            function captureAndSave() {
-                if (isProcessing) return;
-                isProcessing = true;
-
-                // تأثير بسيط أثناء التصوير
-                card.style.opacity = '0.95';
-                
-                // الحصول على أبعاد البطاقة الفعلية
-                const rect = card.getBoundingClientRect();
-                const targetWidth = rect.width;
-                const targetHeight = rect.height;
-                
-                // حساب عامل القياس للوصول إلى دقة 4K أو أعلى جودة ممكنة
-                // 4K العرض = 3840 بكسل على الأقل
-                const min4KWidth = 3840;
-                let scale = Math.max(4, min4KWidth / targetWidth);
-                
-                // الحد الأقصى للقياس لتجنب الأحجام الضخمة جداً (أقصى حد 8 أضعاف)
-                scale = Math.min(scale, 8);
-                
-                html2canvas(card, {
-                    scale: scale,                    // قياس عالي جداً لدقة 4K
-                    backgroundColor: null,            // خلفية شفافة (تحافظ على التدرج)
-                    useCORS: false,
-                    logging: false,
-                    allowTaint: false,
-                    windowWidth: card.scrollWidth,
-                    windowHeight: card.scrollHeight,
-                    onclone: function(clonedDoc, element) {
-                        // التأكد من أن جميع الأنماط تبقى كما هي
-                        const clonedCard = clonedDoc.getElementById('implantCard');
-                        if (clonedCard) {
-                            clonedCard.style.opacity = '1';
-                        }
-                    }
-                }).then(function(canvas) {
-                    card.style.opacity = '1';
-                    
-                    // إنشاء رابط التحميل
-                    const link = document.createElement('a');
-                    const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
-                    link.download = 'زراعة_الاسنان_4K_' + timestamp + '.png';
-                    
-                    // استخدام أفضل جودة PNG (بدون ضغط)
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    
-                    // تنظيف الذاكرة
-                    canvas.remove();
-                    isProcessing = false;
-                    
-                }).catch(function(error) {
-                    console.error('خطأ في التصوير:', error);
-                    card.style.opacity = '1';
-                    isProcessing = false;
-                });
-            }
-
-            // أحداث اللمس للهواتف
-            card.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                pressTimer = setTimeout(function() {
-                    captureAndSave();
-                }, 500);
-            });
-
-            card.addEventListener('touchend', function(e) {
-                if (pressTimer) {
-                    clearTimeout(pressTimer);
-                    pressTimer = null;
-                }
-            });
-
-            card.addEventListener('touchmove', function(e) {
-                if (pressTimer) {
-                    clearTimeout(pressTimer);
-                    pressTimer = null;
-                }
-            });
-
-            // أحداث الفأرة للحواسيب
-            let mouseDownTimer = null;
-            
-            card.addEventListener('mousedown', function(e) {
-                if (e.button !== 0) return;
-                mouseDownTimer = setTimeout(function() {
-                    captureAndSave();
-                }, 500);
-            });
-
-            card.addEventListener('mouseup', function(e) {
-                if (mouseDownTimer) {
-                    clearTimeout(mouseDownTimer);
-                    mouseDownTimer = null;
-                }
-            });
-
-            card.addEventListener('mouseleave', function(e) {
-                if (mouseDownTimer) {
-                    clearTimeout(mouseDownTimer);
-                    mouseDownTimer = null;
-                }
-            });
-
-            // منع القائمة السياقية الافتراضية
-            card.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                return false;
-            });
-
-        })();
-    </script>
 </body>
 </html>

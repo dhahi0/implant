@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معلومات زراعة الأسنان - صورة 4K تلقائية</title>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <title>معلومات زراعة الأسنان</title>
     <style>
         * {
             margin: 0;
@@ -20,11 +19,9 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
-            position: relative;
         }
 
-        /* حاوية البطاقة الأصلية (سيتم إخفاؤها بعد التحويل) */
-        .card-source {
+        .card {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -39,46 +36,16 @@
                 rgba(255,255,255,0.92) 100%);
             padding: 18px;
             border: 1px solid rgba(0,0,0,0.06);
+            margin: 0;
             z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            visibility: hidden;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            user-select: none; /* منع تحديد النص أثناء الضغطة الطويلة */
+            -webkit-tap-highlight-color: transparent; /* إزالة الخلفية الزرقاء عند الضغط */
         }
 
-        /* مكان عرض الصورة الناتجة */
-        .image-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: 500px;
-            width: 100%;
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .result-image {
-            width: 100%;
-            border-radius: 28px;
-            box-shadow: 0 10px 18px rgba(0,0,0,0.1);
-            display: block;
-        }
-
-        /* رسالة التحميل */
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-size: 16px;
-            z-index: 3000;
-            font-weight: 500;
+        .card:active {
+            transform: translate(-50%, -50%) scale(0.99);
         }
 
         .header {
@@ -150,8 +117,26 @@
             color: rgba(0,0,0,0.45);
         }
 
+        /* رسالة تأكيد الحفظ */
+        .toast-message {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
         @media (max-width: 550px) {
-            .card-source, .image-container {
+            .card {
                 width: calc(100% - 40px);
                 max-width: 500px;
             }
@@ -164,15 +149,17 @@
             .center {
                 font-size: 12px;
             }
+            .toast-message {
+                font-size: 12px;
+                white-space: nowrap;
+            }
         }
     </style>
+    <!-- إضافة مكتبة html2canvas لتحويل البطاقة إلى صورة -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-    <!-- رسالة تحميل تظهر أثناء التحويل -->
-    <div id="loadingMsg" class="loading">⏳ جاري تحويل البطاقة إلى صورة 4K...</div>
-
-    <!-- البطاقة الأصلية (سيتم تحويلها إلى صورة ثم إخفاؤها) -->
-    <div id="sourceCard" class="card-source">
+    <div class="card" id="implantCard">
         <div class="header">
             <div class="header-title">معلومات زراعة الأسنان</div>
         </div>
@@ -245,60 +232,115 @@
         </div>
     </div>
 
-    <!-- حاوية الصورة الناتجة -->
-    <div id="imageContainer" class="image-container" style="display: none;">
-        <img id="resultImage" class="result-image" alt="بطاقة زراعة الأسنان">
-    </div>
+    <div class="toast-message" id="toastMessage">✅ تم حفظ البطاقة كصورة</div>
 
     <script>
         (function() {
-            const sourceCard = document.getElementById('sourceCard');
-            const imageContainer = document.getElementById('imageContainer');
-            const resultImage = document.getElementById('resultImage');
-            const loadingMsg = document.getElementById('loadingMsg');
+            const card = document.getElementById('implantCard');
+            const toast = document.getElementById('toastMessage');
+            let pressTimer = null;
+            let isProcessing = false;
 
-            async function convertToImage() {
-                if (!sourceCard) return;
-                
-                try {
-                    // إظهار البطاقة مؤقتاً لالتقاط الصورة (مع إبقائها غير مرئية للمستخدم)
-                    sourceCard.style.opacity = '1';
-                    sourceCard.style.visibility = 'visible';
-                    sourceCard.style.pointerEvents = 'none';
-                    
-                    // التقاط الصورة بدقة 4K
-                    const canvas = await html2canvas(sourceCard, {
-                        scale: 4,
-                        backgroundColor: '#f2f2f2',
-                        logging: false,
-                        useCORS: false,
-                        windowWidth: sourceCard.scrollWidth,
-                        windowHeight: sourceCard.scrollHeight
-                    });
-                    
-                    // إخفاء البطاقة الأصلية مرة أخرى
-                    sourceCard.style.opacity = '0';
-                    sourceCard.style.visibility = 'hidden';
-                    
-                    // تحويل canvas إلى صورة وعرضها
-                    const imageData = canvas.toDataURL('image/png');
-                    resultImage.src = imageData;
-                    
-                    // إظهار حاوية الصورة وإخفاء رسالة التحميل
-                    imageContainer.style.display = 'flex';
-                    loadingMsg.style.display = 'none';
-                    
-                } catch (error) {
-                    console.error('خطأ في التحويل:', error);
-                    loadingMsg.innerHTML = '❌ فشل التحويل، يرجى تحديث الصفحة';
-                    loadingMsg.style.backgroundColor = 'rgba(255,0,0,0.8)';
-                }
+            // دالة عرض رسالة短暂ة
+            function showToast(message) {
+                toast.textContent = message || '✅ تم حفظ البطاقة كصورة';
+                toast.style.opacity = '1';
+                setTimeout(function() {
+                    toast.style.opacity = '0';
+                }, 2000);
             }
-            
-            // تنفيذ التحويل التلقائي بعد تحميل الصفحة مباشرة
-            window.addEventListener('load', () => {
-                setTimeout(convertToImage, 100);
+
+            // دالة حفظ البطاقة كصورة
+            function captureAndSave() {
+                if (isProcessing) return;
+                isProcessing = true;
+
+                // إضافة تأثير بسيط أثناء التصوير (دون تغيير الشكل النهائي)
+                card.style.opacity = '0.95';
+                
+                // استخدام html2canvas لتصوير البطاقة
+                html2canvas(card, {
+                    scale: 2,                    // جودة عالية
+                    backgroundColor: null,        // خلفية شفافة (تحافظ على التدرج)
+                    useCORS: false,
+                    logging: false,
+                    allowTaint: false
+                }).then(function(canvas) {
+                    // إعادة الشفافية
+                    card.style.opacity = '1';
+                    
+                    // تحويل canvas إلى رابط تحميل
+                    const link = document.createElement('a');
+                    const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+                    link.download = 'زراعة_الاسنان_' + timestamp + '.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    showToast('✅ تم حفظ البطاقة كصورة');
+                    isProcessing = false;
+                }).catch(function(error) {
+                    console.error('خطأ في التصوير:', error);
+                    card.style.opacity = '1';
+                    showToast('❌ حدث خطأ، حاول مرة أخرى');
+                    isProcessing = false;
+                });
+            }
+
+            // بدء المؤقت عند الضغط (للهواتف واللمس)
+            card.addEventListener('touchstart', function(e) {
+                // منع القائمة الافتراضية للضغطة الطويلة في المتصفحات
+                e.preventDefault();
+                pressTimer = setTimeout(function() {
+                    captureAndSave();
+                }, 500);
             });
+
+            card.addEventListener('touchend', function(e) {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+            });
+
+            card.addEventListener('touchmove', function(e) {
+                // إلغاء إذا تحرك الإصبع أثناء الضغط
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+            });
+
+            // دعم الفأرة (للحواسيب) - الضغطة المطولة بزر الفأرة الأيسر
+            let mouseDownTimer = null;
+            
+            card.addEventListener('mousedown', function(e) {
+                // زر الفأرة الأيسر فقط (button === 0)
+                if (e.button !== 0) return;
+                mouseDownTimer = setTimeout(function() {
+                    captureAndSave();
+                }, 500);
+            });
+
+            card.addEventListener('mouseup', function(e) {
+                if (mouseDownTimer) {
+                    clearTimeout(mouseDownTimer);
+                    mouseDownTimer = null;
+                }
+            });
+
+            card.addEventListener('mouseleave', function(e) {
+                if (mouseDownTimer) {
+                    clearTimeout(mouseDownTimer);
+                    mouseDownTimer = null;
+                }
+            });
+
+            // منع القائمة السياقية الافتراضية (الضغطة الطويلة)
+            card.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+
         })();
     </script>
 </body>
